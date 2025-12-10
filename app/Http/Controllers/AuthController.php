@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\GoogleLoginRequest;
+use App\Http\Requests\ForgotPasswordRequest;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
@@ -145,14 +146,31 @@ class AuthController extends Controller
 
         $result = $this->authServices->login($data);
 
-        return response()->json([
-            'token' => $result
-        ]);
+        return response()->json($result);
     }
 
+    #[OA\Post(
+        path: '/auth/refresh',
+        summary: 'Generate new token pair',
+        requestBody: new OA\RequestBody(required: true,
+        content: new OA\MediaType(mediaType: 'application/json',
+        schema: new OA\Schema(required: ['refresh_token'],
+            properties: [
+                new OA\Property(property: 'refresh_token', type: 'string', description: 'refresh_token'),
+            ]
+        ),
+    )),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: Response::HTTP_OK, description: 'Token pair created'),
+            new OA\Response(response: Response::HTTP_INTERNAL_SERVER_ERROR, description: 'Server Error')
+        ]
+    )]
     public function refresh(Request $request): JsonResponse
     {
-        $result = $this->authServices->refresh();
+        $refresh_token = $request->refresh_token;
+
+        $result = $this->authServices->refresh($refresh_token);
 
         return response()->json($result);
     }
@@ -216,5 +234,44 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logout successfully'
         ]);
+    }
+
+    #[OA\Post(
+        path: '/auth/forgot-password',
+        summary: 'Send reset password to email',
+        tags: ['Auth'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/json',
+                schema: new OA\Schema(
+                    type: 'object',
+                    required: ['email'],
+                    properties: [
+                        new OA\Property(property: 'email', type: 'string', description: 'User email', example: 'milos@mail.com'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: Response::HTTP_OK, description: 'Reset password link sent'),
+            new OA\Response(response: Response::HTTP_INTERNAL_SERVER_ERROR, description: 'Server Error')
+        ]
+    )]
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        $users = $this->authServices->forgotPassword($data);
+        return response()->json(['messsage' => 'reset link sent to email']);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $forgot_password_token = $request->query('forgot_password_token');
+
+        $result = $this->authServices->resetPassword($forgot_password_token);
+        return response()->json(['messsage' => 'reset link sent to email']);
     }
 }

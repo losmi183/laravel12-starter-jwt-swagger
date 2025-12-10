@@ -5,21 +5,28 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 
-// Send verification email
-Route::post('/auth/register', [AuthController::class, 'register']);
-// Send verification email - user already created but unactive
-Route::post('/auth/resend-verify-email', [AuthController::class, 'resendVerifyEmail']);
 
-Route::get('/auth/verify-email', [AuthController::class, 'verifyEmail']);
+Route::group(['prefix' => 'auth'], function () {
+    
+    // Send verification email
+    Route::post('/register', [AuthController::class, 'register']);
+    // Send verification email - user already created but unactive
+    Route::post('/resend-verify-email', [AuthController::class, 'resendVerifyEmail']);
+    // Decrypt token, activate user, redirect to login
+    Route::get('/verify-email', [AuthController::class, 'verifyEmail']);
+    
+    
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class,'refresh']);
+    
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    
+    Route::post('/google-login', [AuthController::class, 'googleLogin']);
+    Route::get('/google/callback', [AuthController::class, 'handleGoogleCallback']);
+});
 
-
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/refresh', [AuthController::class,'refresh']);
-Route::post('/auth/logout', [AuthController::class, 'logout']);
-Route::post('/auth/forgot-password', [UserController::class, 'forgotPassword']);
-
-Route::post('/auth/google-login', [AuthController::class, 'googleLogin']);
-Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
 
 

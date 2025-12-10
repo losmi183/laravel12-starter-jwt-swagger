@@ -68,11 +68,4 @@ class UserServices {
 
         return $user;
     }
-
-    public function forgotPassword(array $data): bool
-    {
-        // send email to $data['password']
-        return true;
-    }
-
  }

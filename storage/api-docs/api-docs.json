@@ -175,6 +175,42 @@
                 }
             }
         },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Generate new token pair",
+                "operationId": "f6c9683ed975ace7d035a09e6e2a9332",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "description": "refresh_token",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token pair created"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                }
+            }
+        },
         "/auth/whoami": {
             "get": {
                 "tags": [
@@ -207,6 +243,48 @@
                 "responses": {
                     "200": {
                         "description": "Korisnik odjavljen iz sistema"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/forgot-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Send reset password to email",
+                "operationId": "b13d5efc90e1de6d4e9900240fce9b4d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "User email",
+                                        "type": "string",
+                                        "example": "milos@mail.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reset password link sent"
                     },
                     "500": {
                         "description": "Server Error"
@@ -358,48 +436,6 @@
                 "responses": {
                     "200": {
                         "description": "User updated"
-                    },
-                    "500": {
-                        "description": "Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/user/forgot-password": {
-            "post": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Send reset password to email",
-                "operationId": "5730d16a34a3a9c69039ba5aa91552f0",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "description": "User email",
-                                        "type": "string",
-                                        "example": "milos.glogovac@gmail.com"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Reset password link sent"
                     },
                     "500": {
                         "description": "Server Error"

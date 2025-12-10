@@ -32,18 +32,12 @@ class JWTServices
      * 
      * @return \stdClass
      */
-    public function setPair(array $data, ?int $ttl=null): \stdClass
+    public function setPair(User $user, float $ttl_minutes): \stdClass
     {
         $obj = new \stdClass;
 
-        if($ttl) {
-            $jwt_time_to_live = $ttl;
-        } else {
-            $jwt_time_to_live = config('settings.JWT2LIVEMIN');
-        }
-        $obj->token = $this->createJWT($data, $jwt_time_to_live);
-        $jwt_refresh_t2l = config('settings.JWT2RFSHMIN');
-        $obj->rtoken = $this->createJWT($data, $jwt_refresh_t2l);
+        $obj->token = $this->createJWT($user, config('jwt.JWT2LIVEMIN'));
+        $obj->refresh_token = $this->createJWT($user, config('jwt.JWT2RFSHMIN'));
 
         return $obj;
     }
