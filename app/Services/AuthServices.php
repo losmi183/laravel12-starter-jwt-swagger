@@ -123,6 +123,10 @@ class AuthServices {
     {
         $user = $this->userRepository->findByEmail($data['email']);
 
+        if(!$user) {
+            abort(400, 'User not found');
+        }
+
         if(!$user->active_from) {
             abort(400, 'Account not active');
         }
