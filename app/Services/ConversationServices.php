@@ -34,25 +34,71 @@ class ConversationServices {
         $user = $this->jwtServices->getContent();
         $user_id = $user['id'];
 
+        $conversations = DB::table('conversations as c')
+        
+        ->join('conversation_user as cu_user', function($join) use ($user_id) {
+            $join->on('c.id', '=', 'cu_user.conversation_id')
+                ->where('cu_user.user_id', $user_id);
+        })
 
-        $conversations = Conversation::forUser($user_id)
-            ->leftJoin('conversation_user as cu', function($join) use ($user_id) {
-                $join->on('cu.conversation_id', 'conversations.id')
-                    ->where('cu.user_id', $user_id);
-            })
-            ->leftJoin('messages as m', function($join) {
-                // COALESCE uzima 0 ako je last_read_message_id null ili 0
-                $join->on('m.conversation_id', 'conversations.id')
-                    ->whereRaw('m.id > COALESCE(cu.last_read_message_id, 0)');
-            })
-            ->select(
-                'conversations.id',
-                'conversations.type',
-                'conversations.title',
-                DB::raw('COUNT(m.id) as unread_count')
-            )
-            ->groupBy('conversations.id', 'conversations.type', 'conversations.title')
-            ->get();
+        ->leftjoin('conversation_user as cu', function($join) use ($user_id) {
+            $join->on('c.id', '=', 'cu.conversation_id')
+                ->where('cu.user_id', '!=', $user_id);
+        })
+
+        ->leftJoin('users as u', 'u.id', 'cu.user_id')
+
+        ->select([
+            'c.id', 'c.title', 'c.type',
+            DB::raw("GROUP_CONCAT(CONCAT_WS('|', u.id, u.name, u.avatar)) as participants"),
+
+            DB::raw("
+                (SELECT COUNT(*) 
+                FROM messages as m
+                WHERE m.conversation_id = c.id
+                    AND (
+                        cu_user.last_read_message_id IS NULL
+                        OR m.id > cu_user.last_read_message_id
+                    )
+                ) as unread_count
+            ")            
+        ])        
+        ->groupBy('c.id', 'c.title', 'c.type', 'cu_user.last_read_message_id')
+        ->get();
+
+        foreach ($conversations as $conversation) {
+            $conversation->users = [];
+            $participants = explode(',' ,$conversation->participants);
+            foreach ($participants as $p) {
+                $pArray = explode('|', $p);
+                $pObj = new stdClass;
+                $pObj->id = $pArray[0] ?? null;
+                $pObj->name = $pArray[1] ?? null;
+                $pObj->avatar = $pArray[2] ?? null;
+                $pObj->avatar_url = $pObj->avatar ? config('app.url') . '/images/avatar/' . $pObj->avatar : null;
+                $conversation->users[] = $pObj;
+            }
+        }
+
+
+        // $conversations = Conversation::forUser($user_id)
+        //     ->leftJoin('conversation_user as cu', function($join) use ($user_id) {
+        //         $join->on('cu.conversation_id', 'conversations.id')
+        //             ->where('cu.user_id', $user_id);
+        //     })
+        //     ->leftJoin('messages as m', function($join) {
+        //         // COALESCE uzima 0 ako je last_read_message_id null ili 0
+        //         $join->on('m.conversation_id', 'conversations.id')
+        //             ->whereRaw('m.id > COALESCE(cu.last_read_message_id, 0)');
+        //     })
+        //     ->select(
+        //         'conversations.id',
+        //         'conversations.type',
+        //         'conversations.title',
+        //         DB::raw('COUNT(m.id) as unread_count')
+        //     )
+        //     ->groupBy('conversations.id', 'conversations.type', 'conversations.title')
+        //     ->get();
 
 
         return $conversations;
